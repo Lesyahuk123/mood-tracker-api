@@ -3,189 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MoodMagic 🌸 - Трекер настроения</title>
-    <!-- Chart.js для графиков -->
+    <title>MoodMagic — Дневник настроения</title>
+    <link rel="stylesheet" href="/static/css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        /* ========== ПЕРЕМЕННЫЕ ДЛЯ ТЕМ ========== */
-        :root {
-            --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            --card-bg: white;
-            --text-color: #333;
-            --text-secondary: #888;
-            --btn-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            --result-bg: #f8f9fa;
-            --border-color: #ddd;
-        }
-
-        [data-theme="dark"] {
-            --bg-gradient: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            --card-bg: #1e1e2e;
-            --text-color: #e0e0e0;
-            --text-secondary: #aaa;
-            --btn-gradient: linear-gradient(135deg, #e94560 0%, #533483 100%);
-            --result-bg: #2a2a3e;
-            --border-color: #444;
-        }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: var(--bg-gradient);
-            min-height: 100vh;
-            padding: 20px;
-            transition: all 0.3s ease;
-            color: var(--text-color);
-        }
-
-        .container { max-width: 700px; margin: 0 auto; }
-
-        /* Шапка с переключателем темы */
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .theme-toggle {
-            background: var(--card-bg);
-            border: none;
-            font-size: 24px;
-            cursor: pointer;
-            padding: 10px;
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-        }
-
-        .card {
-            background: var(--card-bg);
-            border-radius: 20px;
-            padding: 25px;
-            margin-bottom: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            transition: all 0.3s ease;
-        }
-
-        h1 {
-            color: #764ba2;
-            text-align: center;
-            margin-bottom: 10px;
-        }
-        [data-theme="dark"] h1 { color: #e94560; }
-
-        h3 {
-            color: #764ba2;
-            margin-bottom: 15px;
-        }
-        [data-theme="dark"] h3 { color: #e94560; }
-
-        .subtitle { text-align: center; color: var(--text-secondary); margin-bottom: 20px; }
-
-        button {
-            background: var(--btn-gradient);
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 30px;
-            cursor: pointer;
-            font-size: 16px;
-            margin: 5px;
-            transition: transform 0.2s;
-        }
-        button:hover { transform: scale(1.02); }
-
-        input, select, textarea {
-            width: 100%;
-            padding: 10px;
-            margin: 10px 0;
-            border: 1px solid var(--border-color);
-            border-radius: 10px;
-            font-size: 16px;
-            background: var(--card-bg);
-            color: var(--text-color);
-        }
-
-        .mood-buttons {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin: 15px 0;
-        }
-
-        .mood-btn {
-            flex: 1;
-            text-align: center;
-            padding: 15px;
-            font-size: 24px;
-            background: #f0f0f0;
-            color: #333;
-            cursor: pointer;
-            border-radius: 15px;
-            transition: all 0.2s;
-        }
-        [data-theme="dark"] .mood-btn { background: #2a2a3e; color: #e0e0e0; }
-
-        .mood-btn:hover {
-            background: #667eea;
-            color: white;
-            transform: scale(1.05);
-        }
-
-        .mood-btn.selected {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-
-        .result {
-            background: var(--result-bg);
-            padding: 15px;
-            border-radius: 10px;
-            margin-top: 15px;
-            display: none;
-        }
-
-        .success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-        [data-theme="dark"] .success { background: #1a3a2a; color: #a0e0a0; border-color: #2a5a3a; }
-
-        .delete-btn {
-            background: #dc3545;
-            padding: 5px 10px;
-            font-size: 12px;
-            margin-left: 10px;
-        }
-
-        .export-buttons {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-
-        canvas { max-height: 300px; margin: 20px 0; }
-
-        .footer { text-align: center; color: white; margin-top: 20px; font-size: 14px; }
-
-        hr { margin: 20px 0; border-color: var(--border-color); }
-    </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>🌸 MoodMagic 🌸</h1>
-            <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
+<div class="container">
+    <div class="header">
+        <div class="theme-palette">
+    <div class="color-dot dot-pink" onclick="setPalette('pink')"></div>
+    <div class="color-dot dot-mint" onclick="setPalette('mint')"></div>
+    <div class="color-dot dot-lavender" onclick="setPalette('lavender')"></div>
+    <div class="color-dot dot-dark" onclick="setPalette('dark')" style="background: linear-gradient(135deg, #1a1a2e, #2d2d44);"></div>
+</div>
+        <div class="user-panel" id="userPanel">
+            <span id="userName">Гость</span>
+            <button id="logoutBtn" style="display:none;" onclick="logout()">Выйти</button>
+            <button id="loginBtn" onclick="showAuthModal()">Вход</button>
         </div>
-        <div class="subtitle">Твой трекер настроения с магией</div>
+    </div>
 
-        <!-- Добавление настроения -->
+    <div id="authSection" class="card" style="display:none;">
+        <h3 id="authTitle">Вход</h3>
+        <input type="text" id="authUsername" placeholder="Логин">
+        <div class="field-hint">💡 Только буквы, цифры, от 3 до 20 символов</div>
+        <input type="password" id="authPassword" placeholder="Пароль">
+        <div class="field-hint">💡 От 4 до 50 символов, без пробелов</div>
+        <button onclick="auth()">Войти</button>
+        <button onclick="toggleAuthMode()">Нет аккаунта? Зарегистрироваться</button>
+        <div id="authResult"></div>
+    </div>
+
+    <div id="appContent" style="display:none;">
         <div class="card">
-            <h3>📝 Как у тебя дела?</h3>
+            <h3>📅 Выбери день</h3>
+            <input type="date" id="selectedDate">
+            <button onclick="loadMoodForDate()">📖 Показать запись за этот день</button>
+            <div id="existingMoodInfo"></div>
+        </div>
+
+        <div class="card">
+            <h3>🗓️ Календарь настроения</h3>
+            <div id="calendarContainer" class="calendar-grid"></div>
+        </div>
+
+        <!-- ===== ГРАФИК НАСТРОЕНИЯ ===== -->
+        <div class="card">
+            <h3>📈 График настроения</h3>
+            <canvas id="moodChart" width="400" height="200"></canvas>
+            <button onclick="loadChart()">🔄 Обновить график</button>
+        </div>
+
+        <div class="card">
+            <h3>😊 Как дела?</h3>
             <div class="mood-buttons">
                 <div class="mood-btn" data-score="1">😢</div>
                 <div class="mood-btn" data-score="2">😕</div>
@@ -195,299 +65,375 @@
                 <div class="mood-btn" data-score="6">😍</div>
             </div>
             <input type="hidden" id="score" value="5">
-            <textarea id="note" placeholder="Расскажи, что случилось..." rows="2"></textarea>
-            <input type="text" id="tags" placeholder="Теги через запятую">
+            <textarea id="note" placeholder="Заметка... (необязательно)"></textarea>
+            <input type="text" id="tags" placeholder="Теги: работа, отдых, спорт">
+            <input type="file" id="photoUpload" accept="image/*">
+            <div id="imagePreview"></div>
             <button onclick="saveMood()">💾 Сохранить настроение</button>
             <div id="saveResult" class="result"></div>
         </div>
 
-        <!-- График настроения -->
         <div class="card">
-            <h3>📈 График настроения</h3>
-            <canvas id="moodChart"></canvas>
-            <button onclick="loadChart()">🔄 Обновить график</button>
+            <h3>📊 Статистика и аналитика</h3>
+            <button onclick="loadStats()">📈 Моя общая статистика</button>
+            <button onclick="loadMonthlyComparison()">📉 Сравнение с прошлым месяцем</button>
+            <button onclick="loadTagAnalysis()">🏷️ Анализ тегов</button>
+            <div id="statsResult"></div>
         </div>
 
-        <!-- Сегодняшнее настроение + статистика -->
         <div class="card">
-            <h3>📅 Сегодня</h3>
-            <button onclick="getTodayMood()">🔍 Показать</button>
-            <div id="todayResult" class="result"></div>
-
-            <hr>
-            <h3>📊 Статистика за неделю</h3>
-            <button onclick="getWeekMood()">📈 Показать</button>
-            <div id="weekResult" class="result"></div>
-        </div>
-
-        <!-- История с удалением -->
-        <div class="card">
-            <h3>📜 История настроений</h3>
-            <div class="export-buttons">
-                <button onclick="getAllMoods()">📋 Показать всё</button>
-                <button onclick="exportToCSV()" style="background: #28a745;">📁 Экспорт в CSV</button>
-            </div>
-            <div id="allResult" class="result"></div>
-        </div>
-
-        <!-- Магические правила -->
-        <div class="card">
-            <h3>🔮 Магические уведомления</h3>
+            <h3>🔮 Магические правила</h3>
             <select id="ruleScore">
-                <option value="3">≤ 3 (грустно)</option>
-                <option value="4">≤ 4 (немного грустно)</option>
-                <option value="5">≤ 5 (средне)</option>
+                <option value="2">≤2 очень грустно</option>
+                <option value="3">≤3 грустно</option>
+                <option value="4">≤4 нормально</option>
             </select>
-            <input type="text" id="ruleMessage" placeholder="Утешительное сообщение" value="💜 Ты справишься!">
+            <input id="ruleMsg" placeholder="Утешительное сообщение">
             <button onclick="addRule()">✨ Добавить правило</button>
-            <button onclick="getRules()">📋 Посмотреть правила</button>
-            <div id="ruleResult" class="result"></div>
+            <button onclick="loadRules()">📜 Показать правила</button>
+            <div id="rulesResult"></div>
         </div>
     </div>
-    <div class="footer">
-        🌸 Твоё настроение — это важно. Заботься о себе. 🌸
-    </div>
+</div>
 
-    <script>
-        let moodChart = null;
+<script>
+    let currentUserId = null, currentUsername = null, authMode = 'login';
+    let moodChart = null;
 
-        // ========== ТЁМНАЯ ТЕМА ==========
-        function toggleTheme() {
-            const currentTheme = document.documentElement.getAttribute('data-theme');
-            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-            document.documentElement.setAttribute('data-theme', newTheme);
-            localStorage.setItem('theme', newTheme);
-            document.querySelector('.theme-toggle').textContent = newTheme === 'dark' ? '☀️' : '🌙';
+    function setPalette(theme) {
+    // Сначала сбрасываем всё
+    document.body.removeAttribute('data-theme');
+    document.body.classList.remove('dark-theme');
+
+    // Применяем цветовую палитру (розовая по умолчанию)
+    if (theme === 'mint') {
+        document.body.setAttribute('data-theme', 'mint');
+        localStorage.setItem('moodTheme', 'mint');
+    } else if (theme === 'lavender') {
+        document.body.setAttribute('data-theme', 'lavender');
+        localStorage.setItem('moodTheme', 'lavender');
+    } else if (theme === 'dark') {
+        document.body.classList.add('dark-theme');
+        localStorage.setItem('moodTheme', 'dark');
+    } else {
+        // розовая (по умолчанию)
+        document.body.removeAttribute('data-theme');
+        localStorage.setItem('moodTheme', 'pink');
+    }
+}
+    const savedTheme = localStorage.getItem('moodTheme');
+    if (savedTheme && savedTheme !== 'pink') setPalette(savedTheme);
+
+    function showAuthModal() {
+        document.getElementById('authSection').style.display = 'block';
+        document.getElementById('appContent').style.display = 'none';
+    }
+    function toggleAuthMode() {
+        authMode = authMode === 'login' ? 'register' : 'login';
+        document.getElementById('authTitle').innerText = authMode === 'login' ? 'Вход' : 'Регистрация';
+    }
+
+    async function auth() {
+        const username = document.getElementById('authUsername').value.trim();
+        const password = document.getElementById('authPassword').value;
+        const resultDiv = document.getElementById('authResult');
+
+        document.getElementById('authUsername').classList.remove('error');
+        document.getElementById('authPassword').classList.remove('error');
+
+        if (username.length < 3 || username.length > 20) {
+            document.getElementById('authUsername').classList.add('error');
+            resultDiv.innerHTML = '<div style="color:red">❌ Логин должен быть от 3 до 20 символов</div>';
+            return;
+        }
+        const loginRegex = /^[a-zA-Z0-9_]+$/;
+        if (!loginRegex.test(username)) {
+            document.getElementById('authUsername').classList.add('error');
+            resultDiv.innerHTML = '<div style="color:red">❌ Логин может содержать только буквы, цифры и подчёркивание</div>';
+            return;
+        }
+        if (password.length < 4 || password.length > 50) {
+            document.getElementById('authPassword').classList.add('error');
+            resultDiv.innerHTML = '<div style="color:red">❌ Пароль должен быть от 4 до 50 символов</div>';
+            return;
+        }
+        if (password.includes(' ')) {
+            document.getElementById('authPassword').classList.add('error');
+            resultDiv.innerHTML = '<div style="color:red">❌ Пароль не должен содержать пробелов</div>';
+            return;
         }
 
-        // Загрузка сохранённой темы
-        const savedTheme = localStorage.getItem('theme');
-        if (savedTheme) {
-            document.documentElement.setAttribute('data-theme', savedTheme);
-            document.querySelector('.theme-toggle').textContent = savedTheme === 'dark' ? '☀️' : '🌙';
-        }
-
-        // Выбор настроения
-        const moodBtns = document.querySelectorAll('.mood-btn');
-        moodBtns.forEach(btn => {
-            btn.addEventListener('click', function() {
-                moodBtns.forEach(b => b.classList.remove('selected'));
-                this.classList.add('selected');
-                document.getElementById('score').value = this.getAttribute('data-score');
-            });
+        const url = authMode === 'login' ? '/api/login' : '/api/register';
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({username, password})
         });
+        const data = await res.json();
+
+        if (res.ok) {
+            currentUserId = data.user_id;
+            currentUsername = data.username;
+            document.getElementById('userName').innerText = currentUsername;
+            document.getElementById('loginBtn').style.display = 'none';
+            document.getElementById('logoutBtn').style.display = 'inline-block';
+            document.getElementById('authSection').style.display = 'none';
+            document.getElementById('appContent').style.display = 'block';
+            loadCalendar();
+            loadMoodForDate();
+            loadChart();
+            resultDiv.innerHTML = '';
+        } else {
+            resultDiv.innerHTML = `<div style="color:red">❌ ${data.error}</div>`;
+        }
+    }
+
+    async function logout() {
+        await fetch('/api/logout', {method: 'POST'});
+        location.reload();
+    }
+
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('selectedDate').value = today;
+    document.getElementById('selectedDate').max = today;
+
+    function clearMoodForm() {
+        document.getElementById('note').value = '';
+        document.getElementById('tags').value = '';
+        document.getElementById('photoUpload').value = '';
+        document.getElementById('imagePreview').innerHTML = '';
+        document.getElementById('existingMoodInfo').innerHTML = '';
+        document.getElementById('saveResult').style.display = 'none';
+        document.getElementById('saveResult').innerHTML = '';
+
+        document.querySelectorAll('.mood-btn').forEach(btn => btn.classList.remove('selected'));
         document.querySelector('.mood-btn[data-score="5"]').classList.add('selected');
+        document.getElementById('score').value = 5;
+    }
 
-        // ========== СОХРАНЕНИЕ НАСТРОЕНИЯ ==========
-        async function saveMood() {
-            const score = document.getElementById('score').value;
-            const note = document.getElementById('note').value;
-            const tagsInput = document.getElementById('tags').value;
-            const tags = tagsInput ? tagsInput.split(',').map(t => t.trim()) : [];
+    async function loadMoodForDate() {
+        const date = document.getElementById('selectedDate').value;
+        document.getElementById('existingMoodInfo').innerHTML = `<div>⏳ Загружаю...</div>`;
 
-            const resultDiv = document.getElementById('saveResult');
-            resultDiv.style.display = 'block';
-            resultDiv.innerHTML = '⏳ Отправляю...';
-            resultDiv.className = 'result';
+        const res = await fetch(`/api/mood/all?start_date=${date}&end_date=${date}`);
+        const data = await res.json();
+        const entry = data.entries?.[0];
 
-            try {
-                const response = await fetch('/api/mood', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ score: parseInt(score), note, tags })
-                });
-                const data = await response.json();
+        if (entry) {
+            document.getElementById('existingMoodInfo').innerHTML = `<div class="stats-badge">✅ Уже есть запись за ${date}: ${entry.score}/6</div>`;
+            document.getElementById('score').value = entry.score;
+            document.getElementById('note').value = entry.note || '';
+            document.getElementById('tags').value = entry.tags || '';
+            document.querySelectorAll('.mood-btn').forEach(btn => btn.classList.remove('selected'));
+            document.querySelector(`.mood-btn[data-score="${entry.score}"]`).classList.add('selected');
 
-                if (response.ok) {
-                    resultDiv.innerHTML = `✨ Сохранено! Оценка: ${data.score}/10<br>${data.magic_message}`;
-                    resultDiv.className = 'result success';
-                    document.getElementById('tags').value = '';
-                    loadChart();
-                } else {
-                    resultDiv.innerHTML = '❌ ' + (data.error || 'Ошибка');
-                }
-            } catch (error) {
-                resultDiv.innerHTML = '❌ Ошибка: ' + error.message;
-            }
-        }
-
-        // ========== ГРАФИК ==========
-        async function loadChart() {
-            const response = await fetch('/api/mood/all');
-            const data = await response.json();
-
-            if (data.entries && data.entries.length > 0) {
-                const reversed = [...data.entries].reverse();
-                const labels = reversed.map(e => e.date);
-                const scores = reversed.map(e => e.score);
-
-                const ctx = document.getElementById('moodChart').getContext('2d');
-
-                if (moodChart) moodChart.destroy();
-
-                moodChart = new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: labels,
-                        datasets: [{
-                            label: 'Настроение (1-10)',
-                            data: scores,
-                            borderColor: '#764ba2',
-                            backgroundColor: 'rgba(118, 75, 162, 0.1)',
-                            tension: 0.3,
-                            fill: true
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        scales: { y: { min: 1, max: 10, stepSize: 1 } }
-                    }
-                });
-            }
-        }
-
-        // ========== СЕГОДНЯ ==========
-        async function getTodayMood() {
-            const resultDiv = document.getElementById('todayResult');
-            resultDiv.style.display = 'block';
-            resultDiv.innerHTML = '⏳ Загружаю...';
-
-            const response = await fetch('/api/mood/today');
-            const data = await response.json();
-
-            if (data.found) {
-                resultDiv.innerHTML = `📅 ${data.entry.date}<br>😊 Настроение: ${data.entry.score}/10<br>📝 ${data.entry.note || '—'}`;
+            if (entry.image_path) {
+                document.getElementById('imagePreview').innerHTML = `<img src="/static/uploads/${entry.image_path}" class="image-preview">`;
             } else {
-                resultDiv.innerHTML = `😴 ${data.message}`;
+                document.getElementById('imagePreview').innerHTML = '';
             }
-            resultDiv.className = 'result success';
+        } else {
+            document.getElementById('existingMoodInfo').innerHTML = `<div>📭 Нет записи за ${date}. Создай новую!</div>`;
+            clearMoodForm();
+        }
+    }
+
+    async function saveMood() {
+        const date = document.getElementById('selectedDate').value;
+        const score = document.getElementById('score').value;
+        const note = document.getElementById('note').value;
+        const tags = document.getElementById('tags').value.split(',').map(t=>t.trim()).filter(t=>t);
+
+        let imagePath = null;
+        const photoFile = document.getElementById('photoUpload').files[0];
+        if (photoFile) {
+            const formData = new FormData();
+            formData.append('photo', photoFile);
+            formData.append('date', date);
+            const photoRes = await fetch('/api/mood/upload-photo', { method: 'POST', body: formData });
+            const photoData = await photoRes.json();
+            if (photoRes.ok) imagePath = photoData.image_path;
         }
 
-        // ========== НЕДЕЛЯ ==========
-        async function getWeekMood() {
-            const resultDiv = document.getElementById('weekResult');
-            resultDiv.style.display = 'block';
-            resultDiv.innerHTML = '⏳ Загружаю...';
+        const res = await fetch('/api/mood', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({date, score: parseInt(score), note, tags, image_path: imagePath})
+        });
+        const data = await res.json();
+        document.getElementById('saveResult').style.display = 'block';
+        document.getElementById('saveResult').innerHTML = `✨ ${data.message}<br>${data.magic_message || ''}`;
+        document.getElementById('photoUpload').value = '';
 
-            const response = await fetch('/api/mood/week');
-            const data = await response.json();
-
-            if (data.total_entries) {
-                let html = `📊 Среднее: ${data.average_mood}/10<br>Всего: ${data.total_entries}<br><ul>`;
-                for (let e of data.entries) {
-                    html += `<li>${e.date}: ${e.score}/10 ${e.note ? '— ' + e.note : ''}</li>`;
-                }
-                html += '</ul>';
-                resultDiv.innerHTML = html;
-            } else {
-                resultDiv.innerHTML = `📭 ${data.message}`;
-            }
-            resultDiv.className = 'result success';
-        }
-
-        // ========== ВСЯ ИСТОРИЯ С УДАЛЕНИЕМ ==========
-        async function getAllMoods() {
-            const resultDiv = document.getElementById('allResult');
-            resultDiv.style.display = 'block';
-            resultDiv.innerHTML = '⏳ Загружаю...';
-
-            const response = await fetch('/api/mood/all');
-            const data = await response.json();
-
-            if (data.entries && data.entries.length > 0) {
-                let html = `<strong>Всего записей: ${data.total_entries}</strong><br><ul>`;
-                for (let e of data.entries) {
-                    html += `<li>${e.date}: ${e.score}/10 ${e.note ? '— ' + e.note : ''}
-                        <button class="delete-btn" onclick="confirmDelete(${e.id})">🗑️</button>
-                    </li>`;
-                }
-                html += '</ul>';
-                resultDiv.innerHTML = html;
-            } else {
-                resultDiv.innerHTML = `📭 ${data.message}`;
-            }
-            resultDiv.className = 'result success';
-        }
-
-        // ========== ПОДТВЕРЖДЕНИЕ УДАЛЕНИЯ ==========
-        async function confirmDelete(id) {
-            if (confirm('❓ Точно удалить эту запись? Это действие нельзя отменить.')) {
-                const response = await fetch(`/api/mood/${id}`, { method: 'DELETE' });
-                const data = await response.json();
-                alert(data.message);
-                getAllMoods();
-                loadChart();
+        if (data.triggered_alerts && data.triggered_alerts.length > 0) {
+            if ('Notification' in window && Notification.permission === 'granted') {
+                const randomIndex = Math.floor(Math.random() * data.triggered_alerts.length);
+                const randomAlert = data.triggered_alerts[randomIndex];
+                new Notification('🔮 Магическое уведомление', { body: randomAlert });
             }
         }
 
-        // ========== ЭКСПОРТ В CSV ==========
-        async function exportToCSV() {
-            const response = await fetch('/api/mood/all');
-            const data = await response.json();
-
-            if (data.entries && data.entries.length > 0) {
-                let csv = "Дата,Оценка,Заметка,Теги\n";
-                for (let e of data.entries) {
-                    csv += `"${e.date}",${e.score},"${e.note || ''}","${e.tags || ''}"\n`;
-                }
-
-                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-                const link = document.createElement('a');
-                const url = URL.createObjectURL(blob);
-                link.href = url;
-                link.setAttribute('download', 'mood_history.csv');
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                URL.revokeObjectURL(url);
-            } else {
-                alert('Нет данных для экспорта');
-            }
-        }
-
-        // ========== МАГИЧЕСКИЕ ПРАВИЛА ==========
-        async function addRule() {
-            const min_score = document.getElementById('ruleScore').value;
-            const message = document.getElementById('ruleMessage').value;
-
-            const resultDiv = document.getElementById('ruleResult');
-            resultDiv.style.display = 'block';
-            resultDiv.innerHTML = '⏳ Добавляю...';
-
-            const response = await fetch('/api/alert/rule', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ min_score: parseInt(min_score), message })
-            });
-            const data = await response.json();
-
-            resultDiv.innerHTML = data.message;
-            resultDiv.className = 'result success';
-        }
-
-        async function getRules() {
-            const resultDiv = document.getElementById('ruleResult');
-            resultDiv.style.display = 'block';
-            resultDiv.innerHTML = '⏳ Загружаю...';
-
-            const response = await fetch('/api/alert/rules');
-            const data = await response.json();
-
-            if (data.rules && data.rules.length > 0) {
-                let html = '<ul>';
-                for (let r of data.rules) {
-                    html += `<li>🔔 Настроение ≤ ${r.min_score} → "${r.message}"</li>`;
-                }
-                html += '</ul>';
-                resultDiv.innerHTML = html;
-            } else {
-                resultDiv.innerHTML = `✨ ${data.message}`;
-            }
-            resultDiv.className = 'result success';
-        }
-
-        // Загружаем график при старте
+        loadCalendar();
+        loadMoodForDate();
         loadChart();
-    </script>
+    }
+
+    async function loadCalendar() {
+        const res = await fetch('/api/mood/all');
+        const data = await res.json();
+        const moods = data.entries || [];
+        const moodByDate = {};
+        moods.forEach(m => { moodByDate[m.date] = m.score; });
+
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = now.getMonth();
+        const firstDay = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month+1, 0).getDate();
+
+        let html = '<div class="calendar-grid">';
+        ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'].forEach(d => html += `<div style="text-align:center; font-weight:bold;">${d}</div>`);
+        for (let i=0; i<(firstDay+6)%7; i++) html += '<div></div>';
+        for (let d=1; d<=daysInMonth; d++) {
+            let dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+            let score = moodByDate[dateStr];
+            let colorClass = '';
+            if(score >= 5) colorClass = 'high';
+            else if(score >= 3) colorClass = 'medium';
+            else if(score) colorClass = 'low';
+            html += `<div class="cal-day ${colorClass}" onclick="selectDate('${dateStr}')">${d}</div>`;
+        }
+        html += '</div>';
+        document.getElementById('calendarContainer').innerHTML = html;
+    }
+
+    function selectDate(date) {
+        document.getElementById('selectedDate').value = date;
+        loadMoodForDate();
+    }
+
+    // ===== ГРАФИК =====
+    async function loadChart() {
+        const res = await fetch('/api/mood/all');
+        const data = await res.json();
+        const moods = data.entries || [];
+
+        if (moods.length === 0) {
+            const ctx = document.getElementById('moodChart').getContext('2d');
+            if (moodChart) moodChart.destroy();
+            moodChart = new Chart(ctx, {
+                type: 'line',
+                data: { labels: [], datasets: [{ label: 'Настроение (1-6)', data: [], borderColor: '#ff6f91', tension: 0.3 }] },
+                options: { responsive: true, scales: { y: { min: 1, max: 6 } } }
+            });
+            return;
+        }
+
+        const sorted = [...moods].reverse();
+        const labels = sorted.map(m => m.date);
+        const scores = sorted.map(m => m.score);
+
+        const ctx = document.getElementById('moodChart').getContext('2d');
+        if (moodChart) moodChart.destroy();
+        moodChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Настроение (1-6)',
+                    data: scores,
+                    borderColor: '#ff6f91',
+                    backgroundColor: 'rgba(255, 111, 145, 0.1)',
+                    tension: 0.3,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: { y: { min: 1, max: 6, stepSize: 1 } }
+            }
+        });
+    }
+
+    async function loadStats() {
+        const res = await fetch('/api/stats');
+        const data = await res.json();
+        if(data.average) {
+            document.getElementById('statsResult').innerHTML = `<div class="result" style="display:block;">📊 Среднее: ${data.average}/6<br>📈 Макс: ${data.max}<br>📉 Мин: ${data.min}<br>📝 Всего записей: ${data.total}</div>`;
+        } else {
+            document.getElementById('statsResult').innerHTML = `<div>Нет данных</div>`;
+        }
+    }
+
+    async function loadMonthlyComparison() {
+        const res = await fetch('/api/monthly-comparison');
+        const data = await res.json();
+        if(data.percent_change) {
+            let moodText = data.happier ? 'счастливее' : 'грустнее';
+            document.getElementById('statsResult').innerHTML = `<div class="result" style="display:block;">📆 В этом месяце ${data.current_avg}/6 vs прошлый ${data.last_avg}/6<br>🎉 Ты на ${Math.abs(data.percent_change)}% ${moodText}!</div>`;
+        } else {
+            document.getElementById('statsResult').innerHTML = `<div>Недостаточно данных</div>`;
+        }
+    }
+
+    async function loadTagAnalysis() {
+        const res = await fetch('/api/tag-analysis');
+        const data = await res.json();
+        let html = '<div class="result" style="display:block;">🏷️ Анализ тегов:<ul>';
+        (data.tags || []).forEach(t => {
+            html += `<li>${t.tag}: средний балл ${t.avg_score}/6 (${t.count} записей)</li>`;
+        });
+        html += '</ul></div>';
+        document.getElementById('statsResult').innerHTML = html;
+    }
+
+    async function addRule() {
+        const min_score = document.getElementById('ruleScore').value;
+        const message = document.getElementById('ruleMsg').value;
+        await fetch('/api/alert/rule', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({min_score: parseInt(min_score), message})});
+        loadRules();
+        document.getElementById('ruleMsg').value = '';
+    }
+
+    async function loadRules() {
+        const res = await fetch('/api/alert/rules');
+        const data = await res.json();
+        let html = '<ul>';
+        (data.rules || []).forEach(r => html += `<li>🔔 Настроение ≤ ${r.min_score}/6 → "${r.message}"</li>`);
+        html += '</ul>';
+        document.getElementById('rulesResult').innerHTML = html;
+    }
+
+    if ('Notification' in window) {
+        Notification.requestPermission();
+    }
+
+    (async () => {
+        const me = await fetch('/api/me');
+        if(me.ok) {
+            const user = await me.json();
+            currentUserId = user.user_id;
+            currentUsername = user.username;
+            document.getElementById('userName').innerText = currentUsername;
+            document.getElementById('loginBtn').style.display = 'none';
+            document.getElementById('logoutBtn').style.display = 'inline-block';
+            document.getElementById('appContent').style.display = 'block';
+            loadCalendar();
+            loadMoodForDate();
+            loadChart();
+        } else {
+            showAuthModal();
+        }
+    })();
+
+    document.querySelectorAll('.mood-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.mood-btn').forEach(b=>b.classList.remove('selected'));
+            this.classList.add('selected');
+            document.getElementById('score').value = this.getAttribute('data-score');
+        });
+    });
+    document.querySelector('.mood-btn[data-score="5"]').classList.add('selected');
+</script>
 </body>
 </html>

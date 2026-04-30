@@ -1,183 +1,239 @@
 """
-MoodMagic API — трекер настроения с магическими уведомлениями
-Версия на Flask с веб-интерфейсом + Telegram бот
-Запуск: python app.py
+MoodMagic API — Полная версия
+С регистрацией, фото, аналитикой тегов, сравнением месяцев, календарём, сменой темы
+Запуск: py app.py
 """
 
-from flask import Flask, request, jsonify, render_template
+import os
+from flask import Flask, request, jsonify, render_template, session
 from flask_cors import CORS
+from werkzeug.utils import secure_filename
+from datetime import datetime, timedelta
+import uuid
+
 from database import (
-    init_db, add_mood_to_db, get_today_mood_from_db,
-    get_week_mood_from_db, get_all_moods_from_db,
-    add_alert_rule_to_db, get_alert_rules_from_db,
-    check_and_trigger_alerts, delete_mood_from_db, get_mood_by_id
+    init_db, create_user, verify_user, get_user_by_id,
+    add_mood_to_db, get_moods_by_user, get_mood_by_date, update_mood, delete_mood,
+    get_mood_stats, get_monthly_comparison, analyze_tags,
+    add_alert_rule_to_db, get_alert_rules_from_db, check_and_trigger_alerts
 )
-import threading
-import time
-import requests
-from datetime import datetime, time as dt_time
-import json
 
 app = Flask(__name__)
+app.secret_key = "moodmagic_secret_key_2025"
 CORS(app)
 
-# НАСТРОЙКИ TELEGRAM
-TELEGRAM_BOT_TOKEN = "8784241074:AAEtDPQmXeHfNND3zjIH7Mv8qi_SFLtOeDg"
-TELEGRAM_CHAT_ID = "6563472240"
+# ========== НАСТРОЙКИ ЗАГРУЗКИ ФОТО ==========
+UPLOAD_FOLDER = 'static/uploads'
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 
-def send_telegram_message(message):
-    """Отправка сообщения в Telegram"""
-    if TELEGRAM_BOT_TOKEN == "YOUR_BOT_TOKEN_HERE":
-        print(f"📱 [TELEGRAM_DEBUG] {message}")
-        return False
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-    try:
-        url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
-        payload = {
-            "chat_id": TELEGRAM_CHAT_ID,
-            "text": message,
-            "parse_mode": "HTML"
-        }
-        response = requests.post(url, json=payload)
-        return response.status_code == 200
-    except Exception as e:
-        print(f"❌ Ошибка отправки в Telegram: {e}")
-        return False
-
-# ========== ФОНОВЫЙ ПОТОК ДЛЯ НАПОМИНАНИЙ ==========
-reminder_sent_today = False
-
-def reminder_worker():
-    """Фоновый поток, который проверяет время и отправляет напоминание в 20:00"""
-    global reminder_sent_today
-    while True:
-        now = datetime.now()
-        target_time = dt_time(20, 0)  # 20:00
-
-        # Если время совпадает и напоминание ещё не отправлено сегодня
-        if now.time().hour == target_time.hour and now.time().minute == target_time.minute:
-            if not reminder_sent_today:
-                message = "🌸 Привет! Как твоё настроение сегодня?\n\nНапиши /mood или зайди в трекер, чтобы записать свои эмоции. Я рядом! 💕"
-                send_telegram_message(message)
-                reminder_sent_today = True
-        else:
-            # Сброс флага в полночь
-            if now.time().hour == 0 and now.time().minute == 0:
-                reminder_sent_today = False
-
-        time.sleep(30)  # Проверяем каждые 30 секунд
-
-# Запускаем фоновый поток
-reminder_thread = threading.Thread(target=reminder_worker, daemon=True)
-reminder_thread.start()
-
-# Инициализируем базу данных
+# БД
 init_db()
 
 # ========== ВЕБ-ИНТЕРФЕЙС ==========
 @app.route('/')
 def index():
-    """Главная страница с веб-интерфейсом"""
     return render_template('index.html')
 
-# ========== API ЭНДПОИНТЫ ==========
-
-@app.route('/api/mood', methods=['POST'])
-def add_mood():
-    """Записать настроение за сегодня"""
+# ========== АВТОРИЗАЦИЯ ==========
+@app.route('/api/register', methods=['POST'])
+def register():
     data = request.get_json()
+    username = data.get('username')
+    password = data.get('password')
 
+    if not username or not password:
+        return jsonify({'error': 'Логин и пароль обязательны'}), 400
+
+    user_id = create_user(username, password)
+    if user_id:
+        session['user_id'] = user_id
+        session['username'] = username
+        return jsonify({'success': True, 'user_id': user_id, 'username': username})
+    else:
+        return jsonify({'error': 'Пользователь уже существует'}), 400
+
+@app.route('/api/login', methods=['POST'])
+def login():
+    data = request.get_json()
+    username = data.get('username')
+    password = data.get('password')
+
+    user_id = verify_user(username, password)
+    if user_id:
+        session['user_id'] = user_id
+        session['username'] = username
+        return jsonify({'success': True, 'user_id': user_id, 'username': username})
+    else:
+        return jsonify({'error': 'Неверный логин или пароль'}), 401
+
+@app.route('/api/logout', methods=['POST'])
+def logout():
+    session.clear()
+    return jsonify({'success': True})
+
+@app.route('/api/me', methods=['GET'])
+def me():
+    if 'user_id' in session:
+        return jsonify({'user_id': session['user_id'], 'username': session['username']})
+    return jsonify({'error': 'Не авторизован'}), 401
+
+# ========== ЗАПИСИ НАСТРОЕНИЙ ==========
+@app.route('/api/mood', methods=['POST'])
+def add_or_update_mood():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Авторизуйтесь'}), 401
+
+    data = request.get_json()
+    date = data.get('date', datetime.now().strftime('%Y-%m-%d'))
     score = data.get('score')
     note = data.get('note')
     tags = data.get('tags', [])
+    image_path = data.get('image_path')
 
-    if not score or not 1 <= score <= 10:
-        return jsonify({'error': 'Оценка должна быть от 1 до 10'}), 400
+    if not score or not 1 <= score <= 6:
+        return jsonify({'error': 'Оценка от 1 до 6'}), 400
 
-    mood_id = add_mood_to_db(score, note, tags)
+    existing = get_mood_by_date(session['user_id'], date)
 
-    if score <= 3:
-        magic_msg = "💜 Держись! Я рядом. Хочешь обнимемся? 💜"
-        # Отправляем уведомление в Telegram при плохом настроении
-        send_telegram_message(f"🌧️ Я заметила, что тебе грустно (оценка: {score}/10).\n\n{magic_msg}\n\nТы не одна! ❤️")
-    elif score <= 6:
-        magic_msg = "🌙 Всё будет хорошо. Сегодня просто такой день. 🌙"
+    if existing:
+        update_mood(session['user_id'], date, score, note, tags, image_path)
+        msg = "обновлена"
     else:
-        magic_msg = "✨ Ты сегодня сияешь! Сохрани эту искру! ✨"
-        send_telegram_message(f"☀️ У тебя отличное настроение ({score}/10)! Рада за тебя! Продолжай в том же духе! 🎉")
+        add_mood_to_db(session['user_id'], score, date, note, tags, image_path)
+        msg = "добавлена"
 
-    triggered_alerts = check_and_trigger_alerts(score)
-    if triggered_alerts:
-        for alert in triggered_alerts:
-            send_telegram_message(f"🔔 {alert}")
+    # Умные магические сообщения (1-6)
+    if score <= 2:
+        magic = "💜 Держись! Я рядом. Ты не одна 💜"
+    elif score == 3:
+        magic = "🍵 Выпей чай, обними кота. Всё наладится 🌙"
+    elif score == 4:
+        magic = "🌿 Хороший день. Завтра будет ещё лучше 🌿"
+    elif score == 5:
+        magic = "🌸 Отличный день! Запомни это чувство 🌸"
+    else:
+        magic = "✨ Ты сегодня суперзвезда! Так держать ✨"
+
+    triggered = check_and_trigger_alerts(session['user_id'], score)
+    # Оставляем все правила для интерфейса, но для уведомления возьмём одно случайное
+    import random
+    if triggered:
+        triggered = [random.choice(triggered)]
 
     return jsonify({
         'status': 'success',
-        'id': mood_id,
-        'score': score,
-        'magic_message': magic_msg,
-        'triggered_alerts': triggered_alerts if triggered_alerts else None
+        'message': f'Запись {msg}',
+        'magic_message': magic,
+        'triggered_alerts': triggered
     })
 
-@app.route('/api/mood/today', methods=['GET'])
-def get_today_mood():
-    entry = get_today_mood_from_db()
-    if entry:
-        return jsonify({'found': True, 'entry': entry})
-    return jsonify({'found': False, 'message': 'Сегодня ещё нет записей 💕'})
+@app.route('/api/mood/upload-photo', methods=['POST'])
+def upload_photo():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Авторизуйтесь'}), 401
 
-@app.route('/api/mood/week', methods=['GET'])
-def get_week_mood():
-    entries = get_week_mood_from_db()
-    if not entries:
-        return jsonify({'message': 'Нет данных за эту неделю'})
-    avg_score = sum(e["score"] for e in entries) / len(entries)
-    return jsonify({
-        'total_entries': len(entries),
-        'average_mood': round(avg_score, 1),
-        'entries': entries
-    })
+    if 'photo' not in request.files:
+        return jsonify({'error': 'Нет файла'}), 400
+
+    file = request.files['photo']
+    date = request.form.get('date', datetime.now().strftime('%Y-%m-%d'))
+
+    if file.filename == '':
+        return jsonify({'error': 'Файл не выбран'}), 400
+
+    if file and allowed_file(file.filename):
+        ext = file.filename.rsplit('.', 1)[1].lower()
+        filename = f"{session['user_id']}_{date}_{uuid.uuid4().hex[:6]}.{ext}"
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(filepath)
+
+        return jsonify({'image_path': filename, 'message': 'Фото загружено'})
+
+    return jsonify({'error': 'Недопустимый формат'}), 400
 
 @app.route('/api/mood/all', methods=['GET'])
 def get_all_moods():
-    entries = get_all_moods_from_db()
-    if not entries:
-        return jsonify({'message': 'История пуста'})
-    return jsonify({'total_entries': len(entries), 'entries': entries})
+    if 'user_id' not in session:
+        return jsonify({'error': 'Авторизуйтесь'}), 401
+
+    start_date = request.args.get('start_date')
+    end_date = request.args.get('end_date')
+    moods = get_moods_by_user(session['user_id'], start_date, end_date)
+    return jsonify({'entries': moods, 'total': len(moods)})
 
 @app.route('/api/mood/<int:mood_id>', methods=['DELETE'])
-def delete_mood(mood_id):
-    """Удалить запись о настроении"""
-    success = delete_mood_from_db(mood_id)
-    if success:
-        return jsonify({'status': 'success', 'message': f'Запись {mood_id} удалена'})
-    return jsonify({'error': 'Запись не найдена'}), 404
+def delete_mood_entry(mood_id):
+    if 'user_id' not in session:
+        return jsonify({'error': 'Авторизуйтесь'}), 401
 
+    if delete_mood(session['user_id'], mood_id):
+        return jsonify({'success': True})
+    return jsonify({'error': 'Не найдено'}), 404
+
+# ========== АНАЛИТИКА ==========
+@app.route('/api/stats', methods=['GET'])
+def stats():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Авторизуйтесь'}), 401
+
+    stats = get_mood_stats(session['user_id'])
+    return jsonify(stats or {})
+
+@app.route('/api/monthly-comparison', methods=['GET'])
+def monthly_comparison():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Авторизуйтесь'}), 401
+
+    comp = get_monthly_comparison(session['user_id'])
+    return jsonify(comp or {})
+
+@app.route('/api/tag-analysis', methods=['GET'])
+def tag_analysis():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Авторизуйтесь'}), 401
+
+    tags = analyze_tags(session['user_id'])
+    return jsonify({'tags': tags})
+
+# ========== ПРАВИЛА ==========
 @app.route('/api/alert/rule', methods=['POST'])
-def add_alert_rule():
+def add_rule():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Авторизуйтесь'}), 401
+
     data = request.get_json()
     min_score = data.get('min_score')
     message = data.get('message')
 
-    if not min_score or not 1 <= min_score <= 10:
-        return jsonify({'error': 'min_score должен быть от 1 до 10'}), 400
-    if not message:
-        return jsonify({'error': 'message не может быть пустым'}), 400
+    if not min_score or not message:
+        return jsonify({'error': 'Поля обязательны'}), 400
 
-    rule_id = add_alert_rule_to_db(min_score, message)
-    return jsonify({'status': 'success', 'id': rule_id, 'message': f'✅ Правило добавлено!'})
+    rule_id = add_alert_rule_to_db(session['user_id'], min_score, message)
+    return jsonify({'success': True, 'id': rule_id})
 
 @app.route('/api/alert/rules', methods=['GET'])
-def get_alert_rules():
-    rules = get_alert_rules_from_db()
-    if not rules:
-        return jsonify({'message': 'Пока нет правил'})
+def get_rules():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Авторизуйтесь'}), 401
+
+    rules = get_alert_rules_from_db(session['user_id'])
     return jsonify({'rules': rules})
+
+
+@app.route('/static/uploads/<filename>')
+def uploaded_file(filename):
+    from flask import send_from_directory
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
 # ========== ЗАПУСК ==========
 if __name__ == '__main__':
-    print("🌸 MoodMagic запущен!")
+    print("🌸 MoodMagic запущен с поддержкой пользователей и фото!")
     print("📱 Открой в браузере: http://127.0.0.1:5000")
-    print("🤖 Telegram бот активен (если настроен)")
-    print("⏰ Напоминания в 20:00 активны")
+    print("🔐 Не забудь зарегистрироваться!")
     app.run(debug=True, host='127.0.0.1', port=5000)
